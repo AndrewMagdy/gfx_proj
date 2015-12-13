@@ -6,7 +6,7 @@ MACCPPFRAMEWORKS=-framework OpenGL GLU
 LINUXCPPFRAMEWORKS=-lGL -lGLU
 
 CPPINCLUDES=/include/
-CPPFILES=main.cpp loader.cpp mesh.cpp texture.cpp stb_image.c
+CPPFILES=main.cpp loader.cpp mesh.cpp texture.cpp stb_image.c Board.cpp Cell.cpp Location.cpp Player.cpp SmallBoard.cpp
 
 LINUXCURDIR=/home/omar/Downloads/OpenGLObjLoader
 MACCURDIR=/Users/andrewmagdy/Downloads/GLMeshLoader-master/
