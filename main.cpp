@@ -55,13 +55,15 @@ float rotb = 40.0f;
 
 int GposX, GposZ;
 bool selected = false;
-int arr [9][9] grid;
+int ** arr;
 
 bool anim_cata = true;
 // Meshes
 Mesh* castle;
 Mesh* catapult_0;
 Mesh* catapult_1;
+
+Board * b;
 // Textures
 GLuint texWood;
 GLuint texStone;
@@ -182,12 +184,16 @@ void drawSmallGrid(float x, float y, int gridX , int gridZ){
   for (int i = 0; i < 3; ++i) {
     for(int j = 0; j < 3; ++j){
       glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
-      if(selected && (gridX * 3) + j == GposX && (gridZ * 3) + i == GposZ ) {
+      if(arr[(gridX * 3) + j] [ (gridZ * 3) + i] == 1 ) {
         glBindTexture(GL_TEXTURE_2D, texStone);
+      }
+      else  if (arr[(gridX * 3) + j] [ (gridZ * 3) + i] == 2 )  {
+        glBindTexture(GL_TEXTURE_2D, texWood);
       }
       else {
         glBindTexture(GL_TEXTURE_2D, texGrass);
       }
+
       glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
       glColor3f(0,1,0);
       glPushMatrix();
@@ -201,8 +207,6 @@ void drawSmallGrid(float x, float y, int gridX , int gridZ){
       glVertex3f(x + 40 + (43 * i), 1, y + 40 + (43 * j));
       glTexCoord2f(0, 5);
       glVertex3f(x + (43 * i), 1, y + 40 + (43 * j));
-
-
       glEnd();
       glPopMatrix();
     }
@@ -346,16 +350,23 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         GposX = ((oglPos[2] - grid.startX)/grid.stepX);
         GposZ = ((oglPos[0] - grid.startY)/grid.stepY);
         selected = true;
-        std::cout << GposX << " " << GposZ << std::endl;
-        //rowSelection = true;
-        //row = 4-GposZ ;
-        //col = GposX ;
+        b->move(Location(GposX / 3, GposZ / 3), Location(GposX % 3, GposZ % 3));
+        arr = b->getBoard();
+
+        bool gameOver = b->isGameOver();
+        cout<<gameOver<<endl;
       }
     }
   }
-
 }
 
+
+void initEngine () {
+  Player p("1", 'x');
+  Player p2("2", 'o');
+  b = new Board(p, p2);
+  arr = b->getBoard();
+}
 int main(int argc, char* argv[])
 {
 
@@ -374,9 +385,8 @@ int main(int argc, char* argv[])
   glfwMakeContextCurrent(window);
 
   initGL();
-  Player p("1", 'x');
-  Player p2("2", 'o');
-  Board b(p, p2);
+  initEngine();
+
   //Main Loop
   while (!glfwWindowShouldClose(window))
   {
