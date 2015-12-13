@@ -63,6 +63,7 @@ Mesh* castle;
 Mesh* catapult_0;
 Mesh* catapult_1;
 Mesh* o;
+Mesh* x;
 
 Board * b;
 // Textures
@@ -120,6 +121,9 @@ void initGL() {
 
   o = new Mesh("models/o.obj");
   o->startLoading();
+
+  x = new Mesh("models/x.obj");
+  x->startLoading();
 
   catapult_1 = new Mesh("models/catapult_1.obj");
   catapult_1->startLoading();
@@ -181,23 +185,39 @@ void drawCatapult () {
     glPopMatrix();
   }
 }
+void drawO (int j , int i) {
+  glPushMatrix();
+  //glRotatef(90,0,1,0);
+  glTranslatef(-200 + (43 * i) + (3 * i/3) + 20, 0, -200 + (43 * j) + (3 * j/3)  + 20);
+  glBindTexture(GL_TEXTURE_2D, texWood); //bind the texture to the next mesh rendered
+  o->render();
+  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+  glPopMatrix();
+}
+
+void drawX (int j , int i) {
+  glPushMatrix();
+  //glRotatef(90,0,1,0);
+  glTranslatef(-200 + (43 * i) + (3 * i/3) + 20, 0, -200 + (43 * j) + (3 * j/3)  + 20);
+  glBindTexture(GL_TEXTURE_2D, texWood); //bind the texture to the next mesh rendered
+  x->render();
+  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+  glPopMatrix();
+}
 
 void drawSmallGrid(float x, float y, int gridX , int gridZ){
   for (int i = 0; i < 3; ++i) {
     for(int j = 0; j < 3; ++j){
       glEnable(GL_TEXTURE_2D);	// Enable 2D texturing
       if(arr[(gridX * 3) + j] [ (gridZ * 3) + i] == 1 ) {
-        glBindTexture(GL_TEXTURE_2D, texStone);
+        drawX((gridX * 3) + j,(gridZ * 3) + i);
       }
       else  if (arr[(gridX * 3) + j] [ (gridZ * 3) + i] == 2 )  {
-        glBindTexture(GL_TEXTURE_2D, texWood);
-      }
-      else {
-        glBindTexture(GL_TEXTURE_2D, texGrass);
+        drawO ((gridX * 3) + j,(gridZ * 3) + i);
       }
 
+        glBindTexture(GL_TEXTURE_2D, texGrass);
       glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
-      glColor3f(0,1,0);
       glPushMatrix();
       glBegin(GL_QUADS);
       glNormal3f(0, 1, 0);	// Set quad normal direction.
@@ -277,18 +297,10 @@ void RenderGround()
   glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
 }
 
-void drawO (int i , int j) {
-  glPushMatrix();
-  //glRotatef(90,0,1,0);
-  glTranslatef(-200 + (43 * i) + (3 * i/3) + 20, 0, -200 + (43 * j) + (3 * j/3)  + 20);
-  glBindTexture(GL_TEXTURE_2D, texWood); //bind the texture to the next mesh rendered
-  o->render();
-  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
-  glPopMatrix();
-}
+
+
 void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  drawO (8,8);
   glPushMatrix();
   //glRotatef(90,0,1,0);
   glTranslatef(-20, 0, -350);

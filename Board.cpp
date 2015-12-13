@@ -109,7 +109,6 @@ Player* Board::getOtherTurn() {
 int** Board::getBoard(){
 	int** bigBoard = 0;
 	bigBoard = new int*[9];
-	memset(board, 0, sizeof bigBoard);
 	for(int i = 0; i < 9; ++i){
 		bigBoard[i] = new int[9];
 		int x = (int) (i / 3.0);
