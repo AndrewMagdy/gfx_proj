@@ -1,8 +1,8 @@
-# Blender MTL File: 'fullcata.blend'
+# Blender MTL File: 'None'
 # Material Count: 2
 
 newmtl wire_086086086
-Ns 96.078431
+Ns 94.117647
 Ka 1.000000 1.000000 1.000000
 Kd 0.640000 0.640000 0.640000
 Ks 0.500000 0.500000 0.500000
@@ -13,7 +13,7 @@ illum 2
 map_Kd /Users/andrewmagdy/Downloads/wood.jpg
 
 newmtl wire_115115115
-Ns 96.078431
+Ns 94.117647
 Ka 1.000000 1.000000 1.000000
 Kd 0.640000 0.640000 0.640000
 Ks 0.500000 0.500000 0.500000

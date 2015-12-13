@@ -81,7 +81,7 @@ const struct Camera {
   float	centerY;
   float	centerZ;
   float	fov;
-} defaultCamera = {20, 770, 70, 20, 0, 0, 40};
+} defaultCamera = {20, 1000, 70, 20, 0, 0, 40};
 Camera camera = defaultCamera;
 
 const struct Grid {
@@ -132,10 +132,9 @@ void animateCatapult () {
   }
   if (rot > 40) {
     glPushMatrix();
-    glTranslatef(20, 0, 0);
-    glRotatef(45, 0, 1, 0);
+    glTranslatef(-60, 0, 230);
+    glRotatef(180, 0, 1, 0);
     glRotatef(rotb, 1, 0, 0);
-    //glScalef(2, 2, 2);
     glBindTexture(GL_TEXTURE_2D, texWood);
     catapult_1->render();
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -144,10 +143,9 @@ void animateCatapult () {
   }
   else {
     glPushMatrix();
-    glTranslatef(20, 0, 0);
-    glRotatef(45, 0, 1, 0);
+      glTranslatef(-60, 0, 230);
+    glRotatef(180, 0, 1, 0);
     glRotatef(rot, 1, 0, 0);
-    //glScalef(2, 2, 2);
     glBindTexture(GL_TEXTURE_2D, texWood);
     catapult_1->render();
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -157,9 +155,9 @@ void animateCatapult () {
 }
 void drawCatapult () {
   glPushMatrix();
-  glTranslatef(20, 0, 0);
-  glRotatef(45, 0, 1, 0);
-  //glScalef(2, 2, 2);
+  glTranslatef(-60, 0, 230);
+  glRotatef(180, 0, 1, 0);
+  //glRotatef(45, 0, 1, 0);
   glBindTexture(GL_TEXTURE_2D, texWood);
   catapult_0->render();
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -170,9 +168,8 @@ void drawCatapult () {
   }
   else {
     glPushMatrix();
-    glTranslatef(20, 0, 0);
-    glRotatef(45, 0, 1, 0);
-    //glScalef(2, 2, 2);
+  glTranslatef(-60, 0, 230);
+    glRotatef(180, 0, 1, 0);
     glBindTexture(GL_TEXTURE_2D, texWood);
     catapult_1->render();
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -277,11 +274,18 @@ void RenderGround()
 void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
   glPushMatrix();
-  glTranslatef(5, 0, 0);
-  glRotatef(90,0,1,0);
-  glColor3f(1,1,1);
-  //glScalef(20,20,20);
+  //glRotatef(90,0,1,0);
+  glTranslatef(-20, 0, -350);
+  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+  castle->render();
+  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+  glPopMatrix();
+
+  glPushMatrix();
+  //glRotatef(90,0,1,0);
+  glTranslatef(-20, 0, 250);
   glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
   castle->render();
   glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
@@ -295,7 +299,8 @@ void render() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(camera.fov, 300 / 300, zNear, zFar);
-
+  cout<<camera.centerX<<" "<<camera.centerY<<" "<<camera.centerZ<<" "<<endl;
+  cout<<camera.eyeX<<" eye "<<camera.eyeY<<" "<<camera.eyeZ<<" "<<endl;
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   gluLookAt(camera.eyeX, camera.eyeY ,camera.eyeZ , camera.centerX, camera.centerY, camera.centerZ, 0.0f, 1.0f, 0.0f);
@@ -304,13 +309,48 @@ void render() {
 
 void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mods)
 {
-  if (action == GLFW_PRESS)
+  if (action == GLFW_REPEAT)
   {
     switch (key)
     {
-      case GLFW_KEY_SPACE:
-      glClearColor(0.0, 0.0, 1.0, 1.0);
+      case GLFW_KEY_W :
+      camera.centerX++;
       break;
+      case GLFW_KEY_S :
+      camera.centerX--;
+      break;
+      case GLFW_KEY_D :
+      camera.centerZ ++;
+      break;
+      case GLFW_KEY_A :
+      camera.centerZ --;
+      break;
+      case GLFW_KEY_X :
+      camera.centerY++;
+      break;
+      case GLFW_KEY_Z :
+      camera.centerY--;
+      break;
+
+      case GLFW_KEY_UP :
+      camera.eyeX++;
+      break;
+      case GLFW_KEY_DOWN :
+      camera.eyeX--;
+      break;
+      case GLFW_KEY_LEFT :
+      camera.eyeY--;
+      break;
+      case GLFW_KEY_RIGHT :
+      camera.eyeY++;
+      break;
+      case GLFW_KEY_K :
+      camera.eyeZ--;
+      break;
+      case GLFW_KEY_L :
+      camera.eyeZ++;
+      break;
+
 
       default:
       break;
@@ -321,9 +361,7 @@ void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mo
     switch (key)
     {
 
-      case GLFW_KEY_SPACE:
-      glClearColor(1.0, 0.0, 0.0, 1.0);
-      break;
+
 
       default:
       break;
