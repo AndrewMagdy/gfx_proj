@@ -57,7 +57,10 @@ int GposX, GposZ;
 bool selected = false;
 int ** arr;
 
-bool anim_cata = true;
+bool anim_cata_0 = true;
+bool anim_cata_1 = false;
+
+bool gameOver = true;
 // Meshes
 Mesh* castle;
 Mesh* catapult_0;
@@ -70,6 +73,7 @@ Board * b;
 GLuint texWood;
 GLuint texStone;
 GLuint texGrass;
+
 
 
 GLdouble zNear = 0.1;
@@ -135,16 +139,27 @@ void initGL() {
   texGrass = Texture::loadPngTexture("Textures/grass.png");
 }
 
-void animateCatapult () {
+void animateCatapult (int i , int j,bool player) {
   if (rotb <= 0) {
-    anim_cata = false;
+    if(player)
+    anim_cata_0 = false;
+    else
+    anim_cata_1= false;
+
   }
+  GLuint texp;
+  if(player)
+  texp = texWood;
+  else
+  texp = texStone;
+
   if (rot > 40) {
     glPushMatrix();
-    glTranslatef(-60, 0, 230);
+    glTranslatef(-150 + (140 *i)  , 0, -150 + (140 *j));
+    if(player)
     glRotatef(180, 0, 1, 0);
     glRotatef(rotb, 1, 0, 0);
-    glBindTexture(GL_TEXTURE_2D, texWood);
+    glBindTexture(GL_TEXTURE_2D, texp);
     catapult_1->render();
     glBindTexture(GL_TEXTURE_2D, 0);
     glPopMatrix();
@@ -152,34 +167,47 @@ void animateCatapult () {
   }
   else {
     glPushMatrix();
-      glTranslatef(-60, 0, 230);
+    glTranslatef(-150 + (140 *i)  , 0, -150 + (140 *j));
+    if(player)
     glRotatef(180, 0, 1, 0);
     glRotatef(rot, 1, 0, 0);
-    glBindTexture(GL_TEXTURE_2D, texWood);
+    glBindTexture(GL_TEXTURE_2D, texp);
     catapult_1->render();
     glBindTexture(GL_TEXTURE_2D, 0);
     glPopMatrix();
     rot++;
   }
 }
-void drawCatapult () {
+void drawCatapult (int i , int j ,bool player) {
+  GLuint texp;
+  if(player)
+  texp = texWood;
+  else
+  texp = texStone;
+
   glPushMatrix();
-  glTranslatef(-60, 0, 230);
+  glTranslatef(-150 + (140 *i)  , 0, -150 + (140 *j));
+  if(player)
   glRotatef(180, 0, 1, 0);
   //glRotatef(45, 0, 1, 0);
-  glBindTexture(GL_TEXTURE_2D, texWood);
+
+  glBindTexture(GL_TEXTURE_2D, texp);
   catapult_0->render();
   glBindTexture(GL_TEXTURE_2D, 0);
   glPopMatrix();
 
-  if (anim_cata) {
-    animateCatapult ();
+  if (player && anim_cata_0) {
+    animateCatapult (i, j,player);
+  }
+  else if (!player && anim_cata_1) {
+    animateCatapult (i, j,player);
   }
   else {
     glPushMatrix();
-  glTranslatef(-60, 0, 230);
+    glTranslatef(-150 + (140 *i)  , 0, -150 + (140 *j));
+    if(player)
     glRotatef(180, 0, 1, 0);
-    glBindTexture(GL_TEXTURE_2D, texWood);
+    glBindTexture(GL_TEXTURE_2D, texp);
     catapult_1->render();
     glBindTexture(GL_TEXTURE_2D, 0);
     glPopMatrix();
@@ -300,6 +328,21 @@ void RenderGround()
 
 
 void render() {
+
+  if(gameOver) {
+    glBindTexture(GL_TEXTURE_2D, texGrass);	// Bind the ground texture
+
+    glPushMatrix();
+    glBegin(GL_QUADS);
+    glNormal3f(0, 1, 0);	// Set quad normal direction.
+    glVertex3f(-400, 0, -400);
+    glVertex3f(400, 0, -400);
+    glVertex3f(400, 0, 400);
+    glVertex3f(-400, 0, 400);
+    glEnd();
+    glPopMatrix();
+  }
+  else {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glPushMatrix();
   //glRotatef(90,0,1,0);
@@ -317,10 +360,11 @@ void render() {
   glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
   glPopMatrix();
 
-  drawCatapult();
+  drawCatapult(2,2 ,1);
+  drawCatapult(2,1 ,0);
   RenderGround();
   drawGrid();
-
+}
   //The Camera
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -418,7 +462,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         b->move(Location(GposX / 3, GposZ / 3), Location(GposX % 3, GposZ % 3));
         arr = b->getBoard();
 
-        bool gameOver = b->isGameOver();
+        gameOver = b->isGameOver();
         cout<<gameOver<<endl;
       }
     }
