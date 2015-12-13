@@ -1,0 +1,11 @@
+Steps:
+
+1-	Search for tutorials to install CMAKE
+2-	Search for tutorials to install GLFW
+
+9-	Go Where the OpenGLMeshLoader repo folder u cloned is
+10-	You will find a file named 'Makefile' .. open it with any text editor
+11-	replace the path of ur cloned repo directory in 'CURDIR' ie: CURDIR='somewhere/OpenGLMeshLoader--master'
+12-	Open terminal and cd to OpenGLMeshLoader folder
+13-	type make
+14-	type ./program
