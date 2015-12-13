@@ -81,7 +81,7 @@ const struct Camera {
   float	centerY;
   float	centerZ;
   float	fov;
-} defaultCamera = {20, 470, 70, 20, 0, 0, 70};
+} defaultCamera = {20, 770, 70, 20, 0, 0, 40};
 Camera camera = defaultCamera;
 
 const struct Grid {
@@ -104,7 +104,7 @@ void initGL() {
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
-  glm::vec3 lightposition = glm::vec3(0, 500, 0);
+  glm::vec3 lightposition = glm::vec3(20, 500, 70);
   GLfloat lightpos[] = {lightposition.x, lightposition.y, lightposition.z, 1};
   glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, lightpos);
   glShadeModel(GL_SMOOTH);
@@ -260,13 +260,13 @@ void RenderGround()
   glBegin(GL_QUADS);
   glNormal3f(0, 1, 0);	// Set quad normal direction.
   glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
-  glVertex3f(-200, 0, -200);
+  glVertex3f(-400, 0, -400);
   glTexCoord2f(5, 0);
-  glVertex3f(200, 0, -200);
+  glVertex3f(400, 0, -400);
   glTexCoord2f(5, 5);
-  glVertex3f(200, 0, 200);
+  glVertex3f(400, 0, 400);
   glTexCoord2f(0, 5);
-  glVertex3f(-200, 0, 200);
+  glVertex3f(-400, 0, 400);
   glEnd();
   glPopMatrix();
 
@@ -278,7 +278,10 @@ void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
-  glTranslatef(10, 0, 0);
+  glTranslatef(5, 0, 0);
+  glRotatef(90,0,1,0);
+  glColor3f(1,1,1);
+  //glScalef(20,20,20);
   glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
   castle->render();
   glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
