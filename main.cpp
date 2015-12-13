@@ -24,15 +24,15 @@
 
 
 #ifdef __APPLE__
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glu.h>
-	#include <GLFW/glfw3.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <GLFW/glfw3.h>
 #elif __linux__
-	#include <GL/gl.h>
-	#include <GL/glu.h>
-	#include <GLFW/glfw3.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GLFW/glfw3.h>
 #else
-	#error "Unknown Compiler"
+#error "Unknown Compiler"
 #endif
 
 
@@ -44,86 +44,141 @@
 #include "texture.h"
 
 
-//////////////////////////// GLOBAL VARIABLES //////////////////////////////////
-int error = 0;																																//
-float rot = 0.0f;																															//
-Mesh* mesh;
-Mesh* second;																																				//
-GLuint texture_id_0;
-GLuint texture_id_1;
-																													//
-////////////////////////////////////////////////////////////////////////////////
 
-int getLatestError()
-{
+int error = 0;
+float rot = 0.0f;
+float rotb = 40.0f;
+
+bool anim_cata = true;
+// Meshes
+Mesh* castle;
+Mesh* catapult_0;
+Mesh* catapult_1;
+// Textures
+GLuint texWood;
+GLuint texStone;
+
+
+
+const struct Camera {
+	float	eyeX ;
+	float	eyeY;
+	float	eyeZ;
+	float	centerX;
+	float	centerY;
+	float	centerZ;
+	float	fov;
+} defaultCamera = {20, 10, 20, 20, 0, 0, 56};
+Camera camera = defaultCamera;
+
+
+int getLatestError() {
 	error++;
 	return error;
 }
 
-void initGL()
-{
-	//////////////////////////// SETUP OPENGL ENUMERATIONS ///////////////////////
-	glClearColor(0.2, 0.2, 0.2, 1.0);																						//
-	glEnable(GL_LIGHTING);																											//
-  glEnable(GL_LIGHT0);																												//
-	glm::vec3 lightposition = glm::vec3(0, 500, 0);															//
-  GLfloat lightpos[] = {lightposition.x, lightposition.y, lightposition.z, 1};//
-  glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, lightpos);													//
-  glShadeModel(GL_SMOOTH);																										//
-  glEnable(GL_MULTISAMPLE);																										//
-	glEnable(GL_DEPTH_TEST);																										//
-	//////////////////////////////////////////////////////////////////////////////
+void initGL() {
 
+	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glm::vec3 lightposition = glm::vec3(0, 500, 0);
+	GLfloat lightpos[] = {lightposition.x, lightposition.y, lightposition.z, 1};
+	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, lightpos);
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_DEPTH_TEST);
 
+	castle = new Mesh("./models/castle.obj");
+	castle->startLoading();
 
-	//////////////////////////// INITIALIZE NEW MESHES ///////////////////////////
-  mesh = new Mesh("./castle.obj");																						//
-  mesh->startLoading();		
+	catapult_0 = new Mesh("models/catapult_0.obj");
+	catapult_0->startLoading();
 
-    second = new Mesh("./untitled.obj");																						//
-  second->startLoading();																											//
-	//////////////////////////////////////////////////////////////////////////////
+	catapult_1 = new Mesh("models/catapult_1.obj");
+	catapult_1->startLoading();
 
-	//////////////////////////// LOADING PNG TEXTURES ////////////////////////////
-  texture_id_0 = Texture::loadPngTexture("wood.jpg");
+	texWood = Texture::loadPngTexture("Textures/wood.jpg");
 
-  texture_id_1 = Texture::loadPngTexture("stone.jpg");											//
-	//////////////////////////////////////////////////////////////////////////////
+	texStone = Texture::loadPngTexture("Textures/stone.jpg");
+
 }
-
-void render()
-{
-	//////////////////////////// RENDER SCENE HERE ///////////////////////////////
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);													//
-  glMatrixMode(GL_PROJECTION);																								//
-  glLoadIdentity();																														//
-  gluPerspective(60.0f, 640.0/480.0, 0.001, 1000.0);													//
-  glMatrixMode(GL_MODELVIEW);																									//
-  glLoadIdentity();																														//
-  gluLookAt(0, 0, 10, 0, 0, -2, 0, 1, 0);																			//
-  rot++;																																			//
-																																							//
-	glPushMatrix();																															//
-  	glRotatef(rot, 0, 1, 0);																									//
-		//bind the texture to the next mesh rendered															//
-		glBindTexture(GL_TEXTURE_2D, texture_id_1);																//
-		mesh->render();																														//
-		//unbind the texure to keep things clean																	//
-		glBindTexture(GL_TEXTURE_2D, 0);																					//
+void animateCatapult () {
+	if (rotb <= 0) {
+		anim_cata = false;
+	}
+	if (rot > 40) {
+		glPushMatrix();
+		glTranslatef(20, 0, 0);
+		glRotatef(45, 0, 1, 0);
+		glRotatef(rotb, 1, 0, 0);
+		glScalef(2, 2, 2);
+		glBindTexture(GL_TEXTURE_2D, texWood);
+		catapult_1->render();
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glPopMatrix();
+		rotb--;
+	}
+	else {
+		glPushMatrix();
+		glTranslatef(20, 0, 0);
+		glRotatef(45, 0, 1, 0);
+		glRotatef(rot, 1, 0, 0);
+		glScalef(2, 2, 2);
+		glBindTexture(GL_TEXTURE_2D, texWood);
+		catapult_1->render();
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glPopMatrix();
+		rot++;
+	}
+}
+void drawCatapult () {
+	glPushMatrix();
+	glTranslatef(20, 0, 0);
+	glRotatef(45, 0, 1, 0);
+	glScalef(2, 2, 2);
+	glBindTexture(GL_TEXTURE_2D, texWood);
+	catapult_0->render();
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glPopMatrix();
 
+	if (anim_cata) {
+		animateCatapult ();
+	}
+	else {
+		glPushMatrix();
+		glTranslatef(20, 0, 0);
+		glRotatef(45, 0, 1, 0);
+		glScalef(2, 2, 2);
+		glBindTexture(GL_TEXTURE_2D, texWood);
+		catapult_1->render();
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glPopMatrix();
+	}
+}
 
-		glPushMatrix();	
-		glRotatef(45, 0, 1, 0);																														//
-  		glRotatef(rot, 1, 0, 0);
-																										//
-		//bind the texture to the next mesh rendered															//
-		glBindTexture(GL_TEXTURE_2D, texture_id_0);																//
-		//second->render();																														//
-		//unbind the texure to keep things clean																	//
-		glBindTexture(GL_TEXTURE_2D, 0);																					//
-	glPopMatrix();																																//
-	//////////////////////////////////////////////////////////////////////////////
+void render() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glPushMatrix();
+	glTranslatef(10, 0, 0);
+	glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+	castle->render();
+	glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+	glPopMatrix();
+
+	drawCatapult();
+
+
+	//The Camera
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(camera.fov, 300 / 300, 0.1f, 300.0f);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(camera.eyeX, camera.eyeY ,camera.eyeZ , camera.centerX, camera.centerY, camera.centerZ, 0.0f, 1.0f, 0.0f);
+
 }
 
 void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mods)
@@ -132,11 +187,11 @@ void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mo
 	{
 		switch (key)
 		{
-		case GLFW_KEY_SPACE:
+			case GLFW_KEY_SPACE:
 			glClearColor(0.0, 0.0, 1.0, 1.0);
 			break;
 
-		default:
+			default:
 			break;
 		}
 	}
@@ -145,11 +200,11 @@ void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mo
 		switch (key)
 		{
 
-		case GLFW_KEY_SPACE:
+			case GLFW_KEY_SPACE:
 			glClearColor(1.0, 0.0, 0.0, 1.0);
 			break;
 
-		default:
+			default:
 			break;
 		}
 	}
@@ -157,11 +212,11 @@ void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mo
 	{
 		switch (key)
 		{
-		case GLFW_KEY_ESCAPE:
+			case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(window, true);
 			break;
 
-		default:
+			default:
 			break;
 		}
 	}
@@ -179,16 +234,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	{
 		switch (button)
 		{
-		case GLFW_MOUSE_BUTTON_RIGHT:
+			case GLFW_MOUSE_BUTTON_RIGHT:
 			break;
 
-		case GLFW_MOUSE_BUTTON_MIDDLE:
+			case GLFW_MOUSE_BUTTON_MIDDLE:
 			break;
 
-		case GLFW_MOUSE_BUTTON_LEFT:
+			case GLFW_MOUSE_BUTTON_LEFT:
 			break;
 
-		default:
+			default:
 			break;
 		}
 	}
@@ -196,52 +251,37 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 int main(int argc, char* argv[])
 {
-	///////////////////////// GET GLFW READY AND CHECK FOR WIERD THINGS //////////
-	if (glfwInit() == false)																										//
-		return getLatestError();																									//
-																																							//
-	glfwWindowHint(GLFW_SAMPLES, 2);																						//
-	GLFWwindow* window = glfwCreateWindow(640, 480, "Basic", NULL, NULL);				//
-	if (!window)																																//
-  {																																						//
-    std::cout << "ERROR GLFWWINDOW NOT READY:\n" << getLatestError() << ".\n";//
-		return getLatestError();																									//
-  }																																						//
-	//////////////////////////////////////////////////////////////////////////////
 
+	if (glfwInit() == false)
+	return getLatestError();
+	glfwWindowHint(GLFW_SAMPLES, 2);
+	GLFWwindow* window = glfwCreateWindow(800, 800, "Basic", NULL, NULL);
+	if (!window)
+	{
+		std::cout << "ERROR GLFWWINDOW NOT READY:\n" << getLatestError() << ".\n";
+		return getLatestError();
+	}
 
+	glfwSetCursorPosCallback(window, cursor_position_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetKeyCallback(window, key_callback);
+	glfwMakeContextCurrent(window);
 
-	//////////////////////////// SET CALLBACKS AND MAKE GL CONTEXT ///////////////
-	glfwSetCursorPosCallback(window, cursor_position_callback);									//
-	glfwSetMouseButtonCallback(window, mouse_button_callback);									//
-	glfwSetKeyCallback(window, key_callback);																		//
-	glfwMakeContextCurrent(window);																							//
-	//////////////////////////////////////////////////////////////////////////////
+	initGL();
+	//Main Loop
+	while (!glfwWindowShouldClose(window))
+	{
+		glfwPollEvents();
+		render();
+		glfwSwapBuffers(window);
+	}
 
-
-
-	//////////////////////////// INITIALIZE OPENGL ///////////////////////////////
-	initGL();																																		//
-	//////////////////////////////////////////////////////////////////////////////
-
-
-
-	//////////////////////////// START REDNDERING LOOP ///////////////////////////
-	while (!glfwWindowShouldClose(window))																			//
-	{																																						//
-		glfwPollEvents();																													//
-		render();																																	//
-    glfwSwapBuffers(window);																									//
-	}																																						//
-	//////////////////////////////////////////////////////////////////////////////
-
-
-
-	//////////////////////////// BE PRO AND LEAVE NO POINTERS LEFT BEHIND ////////
-  delete mesh;																																//
-	glDeleteTextures(1, &texture_id_0);																					//
-	//////////////////////////////////////////////////////////////////////////////
-
+	// Clean Up
+	delete castle;
+	delete catapult_0;
+	delete catapult_1;
+	glDeleteTextures(1, &texWood);
+	glDeleteTextures(1, &texStone);
 
 	glfwTerminate();
 	return 0;
