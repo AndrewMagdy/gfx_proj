@@ -62,6 +62,7 @@ bool anim_cata = true;
 Mesh* castle;
 Mesh* catapult_0;
 Mesh* catapult_1;
+Mesh* o;
 
 Board * b;
 // Textures
@@ -117,6 +118,9 @@ void initGL() {
   catapult_0 = new Mesh("models/catapult_0.obj");
   catapult_0->startLoading();
 
+  o = new Mesh("models/o.obj");
+  o->startLoading();
+
   catapult_1 = new Mesh("models/catapult_1.obj");
   catapult_1->startLoading();
 
@@ -126,6 +130,7 @@ void initGL() {
 
   texGrass = Texture::loadPngTexture("Textures/grass.png");
 }
+
 void animateCatapult () {
   if (rotb <= 0) {
     anim_cata = false;
@@ -271,10 +276,19 @@ void RenderGround()
 
   glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
 }
+
+void drawO (int i , int j) {
+  glPushMatrix();
+  //glRotatef(90,0,1,0);
+  glTranslatef(-200 + (43 * i) + (3 * i/3) + 20, 0, -200 + (43 * j) + (3 * j/3)  + 20);
+  glBindTexture(GL_TEXTURE_2D, texWood); //bind the texture to the next mesh rendered
+  o->render();
+  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+  glPopMatrix();
+}
 void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
+  drawO (8,8);
   glPushMatrix();
   //glRotatef(90,0,1,0);
   glTranslatef(-20, 0, -350);
@@ -299,8 +313,6 @@ void render() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(camera.fov, 300 / 300, zNear, zFar);
-  cout<<camera.centerX<<" "<<camera.centerY<<" "<<camera.centerZ<<" "<<endl;
-  cout<<camera.eyeX<<" eye "<<camera.eyeY<<" "<<camera.eyeZ<<" "<<endl;
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   gluLookAt(camera.eyeX, camera.eyeY ,camera.eyeZ , camera.centerX, camera.centerY, camera.centerZ, 0.0f, 1.0f, 0.0f);
