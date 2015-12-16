@@ -12,6 +12,7 @@ public:
     SmallBoard board[3][3];
     Player p1, p2;
     bool turn;
+    int[][] winners();
     Board(const Player &p11, const Player &p22);
     bool move(Location outerLocation, Location innerLocation);
     bool isGameOver();

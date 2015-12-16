@@ -52,15 +52,19 @@ int mouseX, mouseY;
 bool mouseleftdown = false;
 float rot = 0.0f;
 float rotb = 40.0f;
+float t =0 ;
 
 int GposX, GposZ;
 bool selected = false;
 int ** arr;
 
 bool anim_cata_0 = true;
-bool anim_cata_1 = false;
+bool anim_cata_1 = true;
+bool animBall = true;
 
-bool gameOver = true;
+bool endG = true;
+Player p("1", 'x');
+Player p2("2", 'o');
 // Meshes
 Mesh* castle;
 Mesh* catapult_0;
@@ -74,12 +78,10 @@ GLuint texWood;
 GLuint texStone;
 GLuint texGrass;
 
-
-
 GLdouble zNear = 0.1;
 GLdouble zFar = 1000000;
 
-const struct Camera {
+struct Camera {
   float	eyeX ;
   float	eyeY;
   float	eyeZ;
@@ -87,7 +89,8 @@ const struct Camera {
   float	centerY;
   float	centerZ;
   float	fov;
-} defaultCamera = {20, 1000, 70, 20, 0, 0, 40};
+} defaultCamera = {-890, 340, 70, 10, 0, -20, 40};
+//defaultCamera = {20, 1000, 70, 20, 0, 0, 40};
 Camera camera = defaultCamera;
 
 const struct Grid {
@@ -106,7 +109,6 @@ int getLatestError() {
 }
 
 void initGL() {
-
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
@@ -155,7 +157,7 @@ void animateCatapult (int i , int j,bool player) {
 
   if (rot > 40) {
     glPushMatrix();
-    glTranslatef(-150 + (140 *i)  , 0, -150 + (140 *j));
+    glTranslatef(-150 + (140 *i)  , 10, -150 + (140 *j));
     if(player)
     glRotatef(180, 0, 1, 0);
     glRotatef(rotb, 1, 0, 0);
@@ -167,7 +169,7 @@ void animateCatapult (int i , int j,bool player) {
   }
   else {
     glPushMatrix();
-    glTranslatef(-150 + (140 *i)  , 0, -150 + (140 *j));
+    glTranslatef(-150 + (140 *i)  , 10, -150 + (140 *j));
     if(player)
     glRotatef(180, 0, 1, 0);
     glRotatef(rot, 1, 0, 0);
@@ -186,7 +188,7 @@ void drawCatapult (int i , int j ,bool player) {
   texp = texStone;
 
   glPushMatrix();
-  glTranslatef(-150 + (140 *i)  , 0, -150 + (140 *j));
+  glTranslatef(-150 + (140 *i)  , 10, -150 + (140 *j));
   if(player)
   glRotatef(180, 0, 1, 0);
   //glRotatef(45, 0, 1, 0);
@@ -204,7 +206,7 @@ void drawCatapult (int i , int j ,bool player) {
   }
   else {
     glPushMatrix();
-    glTranslatef(-150 + (140 *i)  , 0, -150 + (140 *j));
+    glTranslatef(-150 + (140 *i)  , 10, -150 + (140 *j));
     if(player)
     glRotatef(180, 0, 1, 0);
     glBindTexture(GL_TEXTURE_2D, texp);
@@ -243,8 +245,7 @@ void drawSmallGrid(float x, float y, int gridX , int gridZ){
       else  if (arr[(gridX * 3) + j] [ (gridZ * 3) + i] == 2 )  {
         drawO ((gridX * 3) + j,(gridZ * 3) + i);
       }
-
-        glBindTexture(GL_TEXTURE_2D, texGrass);
+      glBindTexture(GL_TEXTURE_2D, texGrass);
       glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
       glPushMatrix();
       glBegin(GL_QUADS);
@@ -310,13 +311,13 @@ void RenderGround()
   glBegin(GL_QUADS);
   glNormal3f(0, 1, 0);	// Set quad normal direction.
   glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
-  glVertex3f(-400, 0, -400);
+  glVertex3f(-600, 0, -600);
   glTexCoord2f(5, 0);
-  glVertex3f(400, 0, -400);
+  glVertex3f(600, 0, -600);
   glTexCoord2f(5, 5);
-  glVertex3f(400, 0, 400);
+  glVertex3f(600, 0, 600);
   glTexCoord2f(0, 5);
-  glVertex3f(-400, 0, 400);
+  glVertex3f(-600, 0, 600);
   glEnd();
   glPopMatrix();
 
@@ -325,46 +326,116 @@ void RenderGround()
   glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
 }
 
+void output(float x, float z, string st)
+{
+	glRasterPos3f(x, 0, z);
+	int len, i;
+	len = (int) st.length();
+	for (i = 0; i < len; i++) {
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, st[i]);
+	}
+}
+void displayText(){
+    string x;
+    x = "Player 1 won";
+    output(0,0, x);
+    if(b->isGameOver()){
+        endG = false;
+        if(b->isWinner(p)){
+            x = "Player 1 won";
+            output(0,0, x);
+        }
+        else if(b->isWinner(p2)){
+            x = "Player 2 won";
+            output(0,0, x);
+        }
+        else {
+            x = "It is a tie";
+            output(0,0, x);
+        }
+    }
+}
 
+  void drawBall (int i, int j) {
+    glPushMatrix();
+
+
+    float y = 40 + ( (30 * t * sin(45)) -(t*t));
+    float z = -215 + (140 * j) + (30 * t * cos(45)) ;
+
+
+    if (z > 240) {
+      z = 240;
+    }
+    glTranslatef(-168 + (140 *i) ,y ,z);
+
+
+
+    glColor3f(1, 1, 0.5f);
+    glutSolidSphere(10 , 25, 25);
+    glPopMatrix();
+    if (y >= 20 && animBall)
+    t+= 0.1;
+  }
 
 void render() {
 
-  if(gameOver) {
-    glBindTexture(GL_TEXTURE_2D, texGrass);	// Bind the ground texture
 
-    glPushMatrix();
-    glBegin(GL_QUADS);
-    glNormal3f(0, 1, 0);	// Set quad normal direction.
-    glVertex3f(-400, 0, -400);
-    glVertex3f(400, 0, -400);
-    glVertex3f(400, 0, 400);
-    glVertex3f(-400, 0, 400);
-    glEnd();
-    glPopMatrix();
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  if(!endG){
+    displayText();
   }
   else {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
   glPushMatrix();
-  //glRotatef(90,0,1,0);
-  glTranslatef(-20, 0, -350);
+  glTranslatef(-30, 0, -350);
+  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+  castle->render();
+  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+  glPopMatrix();
+  glPushMatrix();
+
+  glPushMatrix();
+  glTranslatef(-200, 0, -350);
+  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+  castle->render();
+  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+  glPopMatrix();
+  glPushMatrix();
+
+  glPushMatrix();
+  glTranslatef(120, 0, -350);
+  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+  castle->render();
+  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+  glPopMatrix();
+  glPushMatrix();
+
+  glTranslatef(-30, 0, 250);
   glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
   castle->render();
   glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
   glPopMatrix();
 
-  glPushMatrix();
-  //glRotatef(90,0,1,0);
-  glTranslatef(-20, 0, 250);
+  glTranslatef(-200, 0, 250);
   glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
   castle->render();
   glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
   glPopMatrix();
 
-  drawCatapult(2,2 ,1);
-  drawCatapult(2,1 ,0);
+  glTranslatef(120, 0, 250);
+  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+  castle->render();
+  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+  glPopMatrix();
+
+  drawCatapult(2,2,1);
+  drawBall(2,1);
+  drawCatapult(2,1,0);
   RenderGround();
   drawGrid();
-}
+  }
   //The Camera
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -377,46 +448,55 @@ void render() {
 
 void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mods)
 {
-  if (action == GLFW_REPEAT)
+  if (action == GLFW_REPEAT || action == GLFW_PRESS)
   {
     switch (key)
     {
       case GLFW_KEY_W :
-      camera.centerX++;
+      camera.centerX += 10;
       break;
       case GLFW_KEY_S :
-      camera.centerX--;
+      camera.centerX-= 10;
       break;
       case GLFW_KEY_D :
-      camera.centerZ ++;
+      camera.centerZ += 10;
       break;
       case GLFW_KEY_A :
-      camera.centerZ --;
+      camera.centerZ -= 10;
       break;
       case GLFW_KEY_X :
-      camera.centerY++;
+      camera.centerY+= 10;
       break;
       case GLFW_KEY_Z :
-      camera.centerY--;
+      camera.centerY-= 10;
       break;
-
+      case GLFW_KEY_P :
+      cout<<camera.eyeX<<" "<<camera.eyeY<<" "<<camera.eyeZ<<" "<<camera.centerX<<" "<<camera.centerY<<" "<<camera.centerZ<<endl;
+      break;
+      case GLFW_KEY_R :
+      camera = {20, 1000, 70, 20, 0, 0, 40};
+      break;
+      case GLFW_KEY_SPACE :
+      animBall =! animBall;
+      //anim_cata_1 = 1;
+      break;
       case GLFW_KEY_UP :
-      camera.eyeX++;
+      camera.eyeX += 10;
       break;
       case GLFW_KEY_DOWN :
-      camera.eyeX--;
+      camera.eyeX -= 10;
       break;
       case GLFW_KEY_LEFT :
-      camera.eyeY--;
+      camera.eyeY-= 10;
       break;
       case GLFW_KEY_RIGHT :
-      camera.eyeY++;
+      camera.eyeY+= 10;
       break;
       case GLFW_KEY_K :
-      camera.eyeZ--;
+      camera.eyeZ -= 10;
       break;
       case GLFW_KEY_L :
-      camera.eyeZ++;
+      camera.eyeZ += 10;
       break;
 
 
@@ -461,9 +541,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         selected = true;
         b->move(Location(GposX / 3, GposZ / 3), Location(GposX % 3, GposZ % 3));
         arr = b->getBoard();
-
-        gameOver = b->isGameOver();
-        cout<<gameOver<<endl;
+        endG = !b->isGameOver();
+        cout<<endG<<endl;
       }
     }
   }
@@ -471,14 +550,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 
 void initEngine () {
-  Player p("1", 'x');
-  Player p2("2", 'o');
   b = new Board(p, p2);
   arr = b->getBoard();
 }
 int main(int argc, char* argv[])
 {
-
+  glutInit(&argc, argv);
   if (glfwInit() == false)
   return getLatestError();
   glfwWindowHint(GLFW_SAMPLES, 2);
