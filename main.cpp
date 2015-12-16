@@ -57,6 +57,7 @@ float t =0 ;
 int GposX, GposZ;
 bool selected = false;
 int ** arr;
+int ** win;
 
 bool anim_cata_0 = true;
 bool anim_cata_1 = true;
@@ -371,11 +372,84 @@ void displayText(){
 
 
 
-    glColor3f(1, 1, 0.5f);
+    glColor3f(1, 1, 9000);
     glutSolidSphere(10 , 25, 25);
     glPopMatrix();
     if (y >= 20 && animBall)
     t+= 0.1;
+  }
+  void skyboxs () {
+    // Store the current matrix
+      glPushMatrix();
+      GLuint _skybox[6];
+      // Enable/Disable features
+      glPushAttrib(GL_ENABLE_BIT);
+      glEnable(GL_TEXTURE_2D);
+      glDisable(GL_DEPTH_TEST);
+      glDisable(GL_LIGHTING);
+      glDisable(GL_BLEND);
+
+      // Just in case we set all vertices to white.
+      glColor4f(1,1,1,1);
+
+      // Render the front quad
+      glBindTexture(GL_TEXTURE_2D, texStone);
+      glBegin(GL_QUADS);
+          glTexCoord2f(0, 0); glVertex3f(  9000, -9000, -9000 );
+          glTexCoord2f(1, 0); glVertex3f( -9000, -9000, -9000 );
+          glTexCoord2f(1, 1); glVertex3f( -9000,  9000, -9000);
+          glTexCoord2f(0, 1); glVertex3f(  9000,  9000, -9000);
+      glEnd();
+
+      // Render the left quad
+      glBindTexture(GL_TEXTURE_2D, texStone);
+      glBegin(GL_QUADS);
+          glTexCoord2f(0, 0); glVertex3f(  9000, -9000,  9000 );
+          glTexCoord2f(1, 0); glVertex3f(  9000, -9000, -9000 );
+          glTexCoord2f(1, 1); glVertex3f(  9000,  9000, -9000 );
+          glTexCoord2f(0, 1); glVertex3f(  9000,  9000,  9000 );
+      glEnd();
+
+      // Render the back quad
+      glBindTexture(GL_TEXTURE_2D, texStone);
+      glBegin(GL_QUADS);
+          glTexCoord2f(0, 0); glVertex3f( -9000, -9000,  9000 );
+          glTexCoord2f(1, 0); glVertex3f(  9000, -9000,  9000 );
+          glTexCoord2f(1, 1); glVertex3f(  9000,  9000,  9000 );
+          glTexCoord2f(0, 1); glVertex3f( -9000,  9000,  9000 );
+
+      glEnd();
+
+      // Render the right quad
+      glBindTexture(GL_TEXTURE_2D, texStone);
+      glBegin(GL_QUADS);
+          glTexCoord2f(0, 0); glVertex3f( -9000, -9000, -9000 );
+          glTexCoord2f(1, 0); glVertex3f( -9000, -9000,  9000 );
+          glTexCoord2f(1, 1); glVertex3f( -9000,  9000,  9000 );
+          glTexCoord2f(0, 1); glVertex3f( -9000,  9000, -9000 );
+      glEnd();
+
+      // Render the top quad
+      glBindTexture(GL_TEXTURE_2D, texStone);
+      glBegin(GL_QUADS);
+          glTexCoord2f(0, 1); glVertex3f( -9000,  9000, -9000 );
+          glTexCoord2f(0, 0); glVertex3f( -9000,  9000,  9000 );
+          glTexCoord2f(1, 0); glVertex3f(  9000,  9000,  9000 );
+          glTexCoord2f(1, 1); glVertex3f(  9000,  9000, -9000 );
+      glEnd();
+
+      // Render the bottom quad
+      glBindTexture(GL_TEXTURE_2D, texStone);
+      glBegin(GL_QUADS);
+          glTexCoord2f(0, 0); glVertex3f( -9000, -9000, -9000 );
+          glTexCoord2f(0, 1); glVertex3f( -9000, -9000,  9000 );
+          glTexCoord2f(1, 1); glVertex3f(  9000, -9000,  9000 );
+          glTexCoord2f(1, 0); glVertex3f(  9000, -9000, -9000 );
+      glEnd();
+
+      // Restore enable bits and matrix
+      glPopAttrib();
+      glPopMatrix();
   }
 
 void render() {
@@ -387,7 +461,7 @@ void render() {
   }
   else {
 
-
+  skyboxs();
   glPushMatrix();
   glTranslatef(-30, 0, -350);
   glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
@@ -429,10 +503,21 @@ void render() {
   castle->render();
   glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
   glPopMatrix();
+  for (int i =0 ;i<3;++i) {
+    for (int j =0 ;j<3;++j) {
+      if(win[i][j] != 0) {
+          drawCatapult(j,i,win[i][j]);
+          drawBall(j,i);
+      }
+      cout<<win[i][j]<<" ";
+  }
+        cout<<endl;
+}
+cout<<endl<<endl;
 
-  drawCatapult(2,2,1);
-  drawBall(2,1);
-  drawCatapult(2,1,0);
+  //drawCatapult(2,2,1);
+
+  //drawCatapult(2,1,0);
   RenderGround();
   drawGrid();
   }
@@ -542,7 +627,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         b->move(Location(GposX / 3, GposZ / 3), Location(GposX % 3, GposZ % 3));
         arr = b->getBoard();
         endG = !b->isGameOver();
-        cout<<endG<<endl;
+        win = b->winners();
       }
     }
   }
@@ -552,6 +637,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void initEngine () {
   b = new Board(p, p2);
   arr = b->getBoard();
+  win = b->winners();
 }
 int main(int argc, char* argv[])
 {

@@ -5,6 +5,8 @@ Board::Board(const Player &p11, const Player &p22):p1(p11), p2(p22) {
     turn  = true;
 }
 
+
+
 bool Board::move(Location outerLocation, Location innerLocation) {
     Player *playing = getTurn();
 	if ((outerLocation.equals(playing->locationToMove) || playing->locationToMove.equals(Location(100, 100)))) {
@@ -125,6 +127,27 @@ int** Board::getBoard(){
 		}
 	}
 	return bigBoard;
+}
+
+int** Board::winners() {
+  int** hamada = 0;
+	hamada = new int*[3];
+  cout << "zift" << endl;
+  for(int i = 0; i < 3; ++i){
+		hamada[i] = new int[3];
+		for(int j = 0; j < 3; ++j){
+      if ((board[i][j].getWinner()).equals(p1)) {
+        hamada[i][j] = 1;
+        cout << "helloooo" << endl;
+      }
+      else if ((board[i][j].getWinner()).equals(p2))
+        hamada[i][j] = 2;
+      else
+        hamada[i][j] = 0;
+			//hamada[i][j] = (board[i][j].getWinner()).equals(p1) ? 1 : ((board[i][j].getWinner()).equals(p2) ? 2 : 0);
+		}
+	}
+	return hamada;
 }
 
 void Board::display() {
