@@ -263,8 +263,12 @@ void drawSmallGrid(float x, float y, int gridX , int gridZ){
       else  if (arr[(gridX * 3) + j] [ (gridZ * 3) + i] == 2 )  {
         drawO ((gridX * 3) + j,(gridZ * 3) + i);
       }
-
+      if(gridX == zoxx && gridZ == zoxy){
+        glBindTexture(GL_TEXTURE_2D, texStone);
+      }
+      else {
       glBindTexture(GL_TEXTURE_2D, texGrass);
+      }
       glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
       glPushMatrix();
       glBegin(GL_QUADS);
@@ -360,26 +364,7 @@ void output(float x, float z, string st)
   glEnable(GL_LIGHTING);
   glPopMatrix();
 }
-void displayText(){
-  string x;
-  x = "Player 1 won";
-  output(0,0, x);
-  if(b->isGameOver()){
-    endG = false;
-    if(b->isWinner(p)){
-      x = "Player 1 won";
-      output(0,0, x);
-    }
-    else if(b->isWinner(p2)){
-      x = "Player 2 won";
-      output(0,0, x);
-    }
-    else {
-      x = "It is a tie";
-      output(0,0, x);
-    }
-  }
-}
+
 
 void drawBall (int i, int j ,bool player) {
   glPushMatrix();
@@ -489,9 +474,10 @@ void skyboxs () {
 }
 
 void initSound(){
-    if(buffer.loadFromFile("Untitled.ogg")){
+    if(buffer.loadFromFile("sound.wav")){
         sound.setBuffer(buffer);
         sound.play();
+        sound.setLoop(1);
     }
 }
 
@@ -503,12 +489,8 @@ void render() {
   zoxx = zox->locationToMove.getX();
   zoxy = zox->locationToMove.getY();
 
-  cout<<zoxx<<" "<<zoxy<<endl;
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  if(!endG){
-    displayText();
-  }
-  else {
+
 
     skyboxs();
 
@@ -598,7 +580,26 @@ void render() {
     }
     stringstream ss;
     ss<<"Player 1: "<<pla1<<" Player2: "<<pla2;
+    if (!endG) {
+      string x;
+
+      if(b->isGameOver()){
+        endG = false;
+        if(b->isWinner(p)){
+          x = "Player 1 won";
+        }
+        else if(b->isWinner(p2)){
+          x = "Player 2 won";
+        }
+        else {
+          x = "It is a tie";
+        }
+        output(-230,-210, x);
+      }
+    }
+    else {
     output (-230 ,-210,ss.str());
+    }
     //cout<<endl<<endl;
 
     //drawCatapult(2,2,1);
@@ -606,7 +607,7 @@ void render() {
     //drawCatapult(2,1,0);
     RenderGround();
     drawGrid();
-  }
+
   //The Camera
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -644,10 +645,10 @@ void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mo
       case GLFW_KEY_P :
       cout<<camera.eyeX<<" "<<camera.eyeY<<" "<<camera.eyeZ<<" "<<camera.centerX<<" "<<camera.centerY<<" "<<camera.centerZ<<endl;
       break;
-      case GLFW_KEY_R :
+      case GLFW_KEY_T :
       camera = {20, 1000, 70, 20, 0, 0, 40};
       break;
-      case GLFW_KEY_T :
+      case GLFW_KEY_R :
       camera = {-890, 340, 70, 10, 0, -20, 40};
       break;
       case GLFW_KEY_SPACE :
@@ -710,7 +711,7 @@ void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mo
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-  if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+  if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && endG) {
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
     vector<GLdouble> oglPos = GetOGLPos(xpos, ypos);
