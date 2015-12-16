@@ -23,7 +23,7 @@ endif
 ifeq ($(UNAME_S),Darwin)
 
 mac_build:
-	$(CPP) $(CPPFILES) -I $(MACCURDIR)$(CPPINCLUDES) -lglfw3 -lfreetype -framework Cocoa -framework OpenGL -framework GLUT -framework IOKit -framework CoreVideo -o program
+	$(CPP) $(CPPFILES) -I $(MACCURDIR)$(CPPINCLUDES) -lglfw3   -lfreetype -framework Cocoa -framework sfml-audio -framework OpenGL -framework GLUT -framework IOKit -framework CoreVideo -o program
 
 endif
 

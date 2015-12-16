@@ -132,13 +132,11 @@ int** Board::getBoard(){
 int** Board::winners() {
   int** hamada = 0;
 	hamada = new int*[3];
-  cout << "zift" << endl;
   for(int i = 0; i < 3; ++i){
 		hamada[i] = new int[3];
 		for(int j = 0; j < 3; ++j){
       if ((board[i][j].getWinner()).equals(p1)) {
         hamada[i][j] = 1;
-        cout << "helloooo" << endl;
       }
       else if ((board[i][j].getWinner()).equals(p2))
         hamada[i][j] = 2;

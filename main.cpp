@@ -40,10 +40,12 @@
 #include "Tic.h"
 #include "mesh.h"
 #include "texture.h"
+#include <SFML/Audio.hpp>
 
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 using namespace std;
 
 
@@ -54,14 +56,20 @@ float rot = 0.0f;
 float rotb = 40.0f;
 float t =0 ;
 
+int delay = 0;
+
 int GposX, GposZ;
 bool selected = false;
 int ** arr;
 int ** win;
 
-bool anim_cata_0 = true;
-bool anim_cata_1 = true;
-bool animBall = true;
+
+sf::SoundBuffer buffer;
+sf::Sound sound;
+
+bool anim_cata_0 = false;
+bool anim_cata_1 = false;
+bool animBall = false;
 
 bool endG = true;
 Player p("1", 'x');
@@ -73,14 +81,20 @@ Mesh* catapult_1;
 Mesh* o;
 Mesh* x;
 
+float y;
+
 Board * b;
 // Textures
 GLuint texWood;
 GLuint texStone;
 GLuint texGrass;
+GLuint skybox [6];
 
 GLdouble zNear = 0.1;
 GLdouble zFar = 1000000;
+
+int zoxx = -1,zoxy = -1;
+
 
 struct Camera {
   float	eyeX ;
@@ -140,16 +154,17 @@ void initGL() {
   texStone = Texture::loadPngTexture("Textures/stone.jpg");
 
   texGrass = Texture::loadPngTexture("Textures/grass.png");
+
+  skybox[0] = Texture::loadPngTexture("Textures/blood_sport512_front.jpg");
+  skybox[1] = Texture::loadPngTexture("Textures/blood_sport512_left.jpg");
+  skybox[2] = Texture::loadPngTexture("Textures/blood_sport512_back.jpg");
+  skybox[3] = Texture::loadPngTexture("Textures/blood_sport512_right.jpg");
+  skybox[4] = Texture::loadPngTexture("Textures/blood_sport512_top.jpg");
+  skybox[5] = Texture::loadPngTexture("Textures/blood_sport512_top.jpg");
 }
 
 void animateCatapult (int i , int j,bool player) {
-  if (rotb <= 0) {
-    if(player)
-    anim_cata_0 = false;
-    else
-    anim_cata_1= false;
 
-  }
   GLuint texp;
   if(player)
   texp = texWood;
@@ -180,6 +195,11 @@ void animateCatapult (int i , int j,bool player) {
     glPopMatrix();
     rot++;
   }
+  if (rotb <= 0) {
+    anim_cata_0 = false;
+    anim_cata_1= false;
+    rotb = 40.0f;
+  }
 }
 void drawCatapult (int i , int j ,bool player) {
   GLuint texp;
@@ -199,10 +219,7 @@ void drawCatapult (int i , int j ,bool player) {
   glBindTexture(GL_TEXTURE_2D, 0);
   glPopMatrix();
 
-  if (player && anim_cata_0) {
-    animateCatapult (i, j,player);
-  }
-  else if (!player && anim_cata_1) {
+  if (anim_cata_1 && anim_cata_0) {
     animateCatapult (i, j,player);
   }
   else {
@@ -246,6 +263,7 @@ void drawSmallGrid(float x, float y, int gridX , int gridZ){
       else  if (arr[(gridX * 3) + j] [ (gridZ * 3) + i] == 2 )  {
         drawO ((gridX * 3) + j,(gridZ * 3) + i);
       }
+
       glBindTexture(GL_TEXTURE_2D, texGrass);
       glTexCoord2f(0, 0);		// Set tex coordinates ( Using (0,0) -> (5,5) with texture wrapping set to GL_REPEAT to simulate the ground repeated grass texture).
       glPushMatrix();
@@ -326,42 +344,48 @@ void RenderGround()
 
   glColor3f(1, 1, 1);	// Set material back to white instead of grey used for the ground texture.
 }
-
 void output(float x, float z, string st)
 {
-	glRasterPos3f(x, 0, z);
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_LIGHTING);
+  glPushMatrix();
+  glColor3f(1,1,1);
+	glRasterPos3f(x, 10, z);
 	int len, i;
 	len = (int) st.length();
 	for (i = 0; i < len; i++) {
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, st[i]);
 	}
+  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_LIGHTING);
+  glPopMatrix();
 }
 void displayText(){
-    string x;
-    x = "Player 1 won";
-    output(0,0, x);
-    if(b->isGameOver()){
-        endG = false;
-        if(b->isWinner(p)){
-            x = "Player 1 won";
-            output(0,0, x);
-        }
-        else if(b->isWinner(p2)){
-            x = "Player 2 won";
-            output(0,0, x);
-        }
-        else {
-            x = "It is a tie";
-            output(0,0, x);
-        }
+  string x;
+  x = "Player 1 won";
+  output(0,0, x);
+  if(b->isGameOver()){
+    endG = false;
+    if(b->isWinner(p)){
+      x = "Player 1 won";
+      output(0,0, x);
     }
+    else if(b->isWinner(p2)){
+      x = "Player 2 won";
+      output(0,0, x);
+    }
+    else {
+      x = "It is a tie";
+      output(0,0, x);
+    }
+  }
 }
 
-  void drawBall (int i, int j) {
-    glPushMatrix();
+void drawBall (int i, int j ,bool player) {
+  glPushMatrix();
+  if(!player) {
 
-
-    float y = 40 + ( (30 * t * sin(45)) -(t*t));
+    y = 40 + ( (30 * t * sin(45)) -(t*t));
     float z = -215 + (140 * j) + (30 * t * cos(45)) ;
 
 
@@ -370,156 +394,218 @@ void displayText(){
     }
     glTranslatef(-168 + (140 *i) ,y ,z);
 
-
-
     glColor3f(1, 1, 9000);
     glutSolidSphere(10 , 25, 25);
     glPopMatrix();
-    if (y >= 20 && animBall)
-    t+= 0.1;
   }
-  void skyboxs () {
-    // Store the current matrix
-      glPushMatrix();
-      GLuint _skybox[6];
-      // Enable/Disable features
-      glPushAttrib(GL_ENABLE_BIT);
-      glEnable(GL_TEXTURE_2D);
-      glDisable(GL_DEPTH_TEST);
-      glDisable(GL_LIGHTING);
-      glDisable(GL_BLEND);
+  else {
 
-      // Just in case we set all vertices to white.
-      glColor4f(1,1,1,1);
+    y = 40 + ( (30 * t * sin(45)) -(t*t));
+    float z = -225 + ((140 * (j+1)) - (30 * t * cos(45))) ;
 
-      // Render the front quad
-      glBindTexture(GL_TEXTURE_2D, texStone);
-      glBegin(GL_QUADS);
-          glTexCoord2f(0, 0); glVertex3f(  9000, -9000, -9000 );
-          glTexCoord2f(1, 0); glVertex3f( -9000, -9000, -9000 );
-          glTexCoord2f(1, 1); glVertex3f( -9000,  9000, -9000);
-          glTexCoord2f(0, 1); glVertex3f(  9000,  9000, -9000);
-      glEnd();
 
-      // Render the left quad
-      glBindTexture(GL_TEXTURE_2D, texStone);
-      glBegin(GL_QUADS);
-          glTexCoord2f(0, 0); glVertex3f(  9000, -9000,  9000 );
-          glTexCoord2f(1, 0); glVertex3f(  9000, -9000, -9000 );
-          glTexCoord2f(1, 1); glVertex3f(  9000,  9000, -9000 );
-          glTexCoord2f(0, 1); glVertex3f(  9000,  9000,  9000 );
-      glEnd();
+    if (z < -260) {
+      z = -260;
+    }
+    glTranslatef(-132 + (140 *i) ,y ,z);
+    glColor3f(1, 1, 9000);
+    glutSolidSphere(10 , 25, 25);
+    glPopMatrix();
 
-      // Render the back quad
-      glBindTexture(GL_TEXTURE_2D, texStone);
-      glBegin(GL_QUADS);
-          glTexCoord2f(0, 0); glVertex3f( -9000, -9000,  9000 );
-          glTexCoord2f(1, 0); glVertex3f(  9000, -9000,  9000 );
-          glTexCoord2f(1, 1); glVertex3f(  9000,  9000,  9000 );
-          glTexCoord2f(0, 1); glVertex3f( -9000,  9000,  9000 );
-
-      glEnd();
-
-      // Render the right quad
-      glBindTexture(GL_TEXTURE_2D, texStone);
-      glBegin(GL_QUADS);
-          glTexCoord2f(0, 0); glVertex3f( -9000, -9000, -9000 );
-          glTexCoord2f(1, 0); glVertex3f( -9000, -9000,  9000 );
-          glTexCoord2f(1, 1); glVertex3f( -9000,  9000,  9000 );
-          glTexCoord2f(0, 1); glVertex3f( -9000,  9000, -9000 );
-      glEnd();
-
-      // Render the top quad
-      glBindTexture(GL_TEXTURE_2D, texStone);
-      glBegin(GL_QUADS);
-          glTexCoord2f(0, 1); glVertex3f( -9000,  9000, -9000 );
-          glTexCoord2f(0, 0); glVertex3f( -9000,  9000,  9000 );
-          glTexCoord2f(1, 0); glVertex3f(  9000,  9000,  9000 );
-          glTexCoord2f(1, 1); glVertex3f(  9000,  9000, -9000 );
-      glEnd();
-
-      // Render the bottom quad
-      glBindTexture(GL_TEXTURE_2D, texStone);
-      glBegin(GL_QUADS);
-          glTexCoord2f(0, 0); glVertex3f( -9000, -9000, -9000 );
-          glTexCoord2f(0, 1); glVertex3f( -9000, -9000,  9000 );
-          glTexCoord2f(1, 1); glVertex3f(  9000, -9000,  9000 );
-          glTexCoord2f(1, 0); glVertex3f(  9000, -9000, -9000 );
-      glEnd();
-
-      // Restore enable bits and matrix
-      glPopAttrib();
-      glPopMatrix();
   }
+}
+void skyboxs () {
+  // Store the current matrix
+  glPushMatrix();
+
+  // Enable/Disable features
+  glPushAttrib(GL_ENABLE_BIT);
+  glEnable(GL_TEXTURE_2D);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_LIGHTING);
+  glDisable(GL_BLEND);
+
+  // Just in case we set all vertices to white.
+  glColor4f(1,1,1,1);
+
+  // Render the front quad
+  glBindTexture(GL_TEXTURE_2D, skybox[0]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0); glVertex3f(  9000, -9000, -9000 );
+  glTexCoord2f(1, 0); glVertex3f( -9000, -9000, -9000 );
+  glTexCoord2f(1, 1); glVertex3f( -9000,  9000, -9000);
+  glTexCoord2f(0, 1); glVertex3f(  9000,  9000, -9000);
+  glEnd();
+
+  // Render the left quad
+  glBindTexture(GL_TEXTURE_2D, skybox[1]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0); glVertex3f(  9000, -9000,  9000 );
+  glTexCoord2f(1, 0); glVertex3f(  9000, -9000, -9000 );
+  glTexCoord2f(1, 1); glVertex3f(  9000,  9000, -9000 );
+  glTexCoord2f(0, 1); glVertex3f(  9000,  9000,  9000 );
+  glEnd();
+
+  // Render the back quad
+  glBindTexture(GL_TEXTURE_2D, skybox[2]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0); glVertex3f( -9000, -9000,  9000 );
+  glTexCoord2f(1, 0); glVertex3f(  9000, -9000,  9000 );
+  glTexCoord2f(1, 1); glVertex3f(  9000,  9000,  9000 );
+  glTexCoord2f(0, 1); glVertex3f( -9000,  9000,  9000 );
+
+  glEnd();
+
+  // Render the right quad
+  glBindTexture(GL_TEXTURE_2D, skybox[3]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0); glVertex3f( -9000, -9000, -9000 );
+  glTexCoord2f(1, 0); glVertex3f( -9000, -9000,  9000 );
+  glTexCoord2f(1, 1); glVertex3f( -9000,  9000,  9000 );
+  glTexCoord2f(0, 1); glVertex3f( -9000,  9000, -9000 );
+  glEnd();
+
+  // Render the top quad
+  glBindTexture(GL_TEXTURE_2D, skybox[4]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 1); glVertex3f( -9000,  9000, -9000 );
+  glTexCoord2f(0, 0); glVertex3f( -9000,  9000,  9000 );
+  glTexCoord2f(1, 0); glVertex3f(  9000,  9000,  9000 );
+  glTexCoord2f(1, 1); glVertex3f(  9000,  9000, -9000 );
+  glEnd();
+
+  // Render the bottom quad
+  glBindTexture(GL_TEXTURE_2D, skybox[5]);
+  glBegin(GL_QUADS);
+  glTexCoord2f(0, 0); glVertex3f( -9000, -9000, -9000 );
+  glTexCoord2f(0, 1); glVertex3f( -9000, -9000,  9000 );
+  glTexCoord2f(1, 1); glVertex3f(  9000, -9000,  9000 );
+  glTexCoord2f(1, 0); glVertex3f(  9000, -9000, -9000 );
+  glEnd();
+
+  // Restore enable bits and matrix
+  glPopAttrib();
+  glPopMatrix();
+}
+
+void initSound(){
+    if(buffer.loadFromFile("Untitled.ogg")){
+        sound.setBuffer(buffer);
+        sound.play();
+    }
+}
+
 
 void render() {
 
 
+  Player* zox = b->getTurn();
+  zoxx = zox->locationToMove.getX();
+  zoxy = zox->locationToMove.getY();
+
+  cout<<zoxx<<" "<<zoxy<<endl;
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(!endG){
     displayText();
   }
   else {
 
-  skyboxs();
-  glPushMatrix();
-  glTranslatef(-30, 0, -350);
-  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
-  castle->render();
-  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
-  glPopMatrix();
-  glPushMatrix();
+    skyboxs();
 
-  glPushMatrix();
-  glTranslatef(-200, 0, -350);
-  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
-  castle->render();
-  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
-  glPopMatrix();
-  glPushMatrix();
-
-  glPushMatrix();
-  glTranslatef(120, 0, -350);
-  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
-  castle->render();
-  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
-  glPopMatrix();
-  glPushMatrix();
-
-  glTranslatef(-30, 0, 250);
-  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
-  castle->render();
-  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
-  glPopMatrix();
-
-  glTranslatef(-200, 0, 250);
-  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
-  castle->render();
-  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
-  glPopMatrix();
-
-  glTranslatef(120, 0, 250);
-  glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
-  castle->render();
-  glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
-  glPopMatrix();
-  for (int i =0 ;i<3;++i) {
-    for (int j =0 ;j<3;++j) {
-      if(win[i][j] != 0) {
-          drawCatapult(j,i,win[i][j]);
-          drawBall(j,i);
+    if (y >= 20 && animBall){
+      t+= 0.1;
+    }
+    else {
+      if(delay <400){
+        ++ delay;
       }
-      cout<<win[i][j]<<" ";
-  }
-        cout<<endl;
-}
-cout<<endl<<endl;
+      else {
+        t = 0;
+        animBall = false;
+        delay = 0;
+      }
+    }
 
-  //drawCatapult(2,2,1);
+    /*
+    for (int i=0;i<3;++i){
+      for (int j=0;j<3;++j){
+      drawCatapult(i,j,0);
+      drawBall(i,j,0);
 
-  //drawCatapult(2,1,0);
-  RenderGround();
-  drawGrid();
+      drawCatapult(i,j,1);
+      drawBall(i,j,1);
+    }
+}*/
+
+
+    glPushMatrix();
+    glTranslatef(-30, 0, -350);
+    glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+    castle->render();
+    glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+    glPopMatrix();
+    glPushMatrix();
+
+    glPushMatrix();
+    glTranslatef(-200, 0, -350);
+    glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+    castle->render();
+    glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+    glPopMatrix();
+    glPushMatrix();
+
+    glPushMatrix();
+    glTranslatef(120, 0, -350);
+    glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+    castle->render();
+    glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-30, 0, 250);
+    glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+    castle->render();
+    glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+    glPopMatrix();
+
+    glTranslatef(-200, 0, 250);
+    glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+    castle->render();
+    glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+    glPopMatrix();
+
+    glTranslatef(120, 0, 250);
+    glBindTexture(GL_TEXTURE_2D, texStone); //bind the texture to the next mesh rendered
+    castle->render();
+    glBindTexture(GL_TEXTURE_2D, 0); 	//unbind the texure to keep things clean
+    glPopMatrix();
+    int pla1 = 0 ,pla2 = 0 ;
+    for (int i =0 ;i<3;++i) {
+      for (int j =0 ;j<3;++j) {
+        if(win[i][j] != 0) {
+          drawCatapult(j,i,win[i][j]-1);
+          drawBall(j,i,win[i][j]-1);
+          if(win[i][j] == 1){
+            pla1++;
+          }
+          else {
+            pla2++;
+          }
+        }
+        //cout<<win[i][j]<<" ";
+      }
+      //cout<<endl;
+    }
+    stringstream ss;
+    ss<<"Player 1: "<<pla1<<" Player2: "<<pla2;
+    output (-230 ,-210,ss.str());
+    //cout<<endl<<endl;
+
+    //drawCatapult(2,2,1);
+
+    //drawCatapult(2,1,0);
+    RenderGround();
+    drawGrid();
   }
   //The Camera
   glMatrixMode(GL_PROJECTION);
@@ -561,8 +647,17 @@ void key_callback(GLFWwindow* window, int key, int scanccode, int action, int mo
       case GLFW_KEY_R :
       camera = {20, 1000, 70, 20, 0, 0, 40};
       break;
+      case GLFW_KEY_T :
+      camera = {-890, 340, 70, 10, 0, -20, 40};
+      break;
       case GLFW_KEY_SPACE :
-      animBall =! animBall;
+      if(!animBall)
+      {
+        animBall = 1;
+        anim_cata_0 = true;
+        anim_cata_1 = true;
+        t = 0;
+      }
       //anim_cata_1 = 1;
       break;
       case GLFW_KEY_UP :
@@ -657,6 +752,7 @@ int main(int argc, char* argv[])
   glfwMakeContextCurrent(window);
 
   initGL();
+  initSound();
   initEngine();
 
   //Main Loop
